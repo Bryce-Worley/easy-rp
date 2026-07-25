@@ -2,9 +2,16 @@ import { useState, useEffect } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
 import { Auth } from './components/Auth'
+import DashboardLayout from './components/DashboardLayout'
+
+type ViewType = 'WEEK' | 'MONTH' | 'YEAR'
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null)
+  const [currentDate, setCurrentDate] = useState(new Date())
+
+  // Track the current view type (WEEK, MONTH, YEAR)
+  const [currentView, setCurrentView] = useState<ViewType>('WEEK')
 
   useEffect(() => {
     // Get the current session on load
@@ -12,7 +19,6 @@ export default function App() {
       setSession(session)
     })
 
-    // Listen for login/logout events
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -22,17 +28,44 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
-  // If no one is logged in, show the Auth screen
+  const handlePrevWeek = () => {
+    const newDate = new Date(currentDate)
+    newDate.setDate(newDate.getDate() - 7)
+    setCurrentDate(newDate)
+  }
+
+  const handleNextWeek = () => {
+    const newDate = new Date(currentDate)
+    newDate.setDate(newDate.getDate() + 7)
+    setCurrentDate(newDate)
+  }
+
+  const handleGoToToday = () => {
+    setCurrentDate(new Date())
+  }
+
   if (!session) {
     return <Auth />
   }
-
-  // If they are logged in, show the dashboard
+  
   return (
-    <div>
-      <h1>Training Dashboard</h1>
-      <p>Logged in as: {session.user.email}</p>
-      <button onClick={() => supabase.auth.signOut()}>Log Out</button>
-    </div>
+    <DashboardLayout
+      currentDate={currentDate}
+      currentView={currentView}
+      onPrevWeek={handlePrevWeek}
+      onNextWeek={handleNextWeek}
+      onGoToToday={handleGoToToday}
+      onViewChange={setCurrentView}
+    >
+      <div className="text-zinc-400">
+        <p> Logged in as: {session.user.email}</p>
+        <button
+          onClick={() => supabase.auth.signOut()}
+          className="mt-4 px-4 py-2 border border-zinc-700 rounded hover:bg-zinc-800"
+        >
+          Log Out
+        </button>
+      </div>
+    </DashboardLayout>
   )
 }
