@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
 import { Auth } from './components/Auth'
 import DashboardLayout from './components/DashboardLayout'
+import WeeklyGrid from './components/WeeklyGrid'
 
 type ViewType = 'WEEK' | 'MONTH' | 'YEAR'
 
@@ -57,14 +58,9 @@ export default function App() {
       onGoToToday={handleGoToToday}
       onViewChange={setCurrentView}
     >
-      <div className="text-zinc-400">
-        <p> Logged in as: {session.user.email}</p>
-        <button
-          onClick={() => supabase.auth.signOut()}
-          className="mt-4 px-4 py-2 border border-zinc-700 rounded hover:bg-zinc-800"
-        >
-          Log Out
-        </button>
+      {/* Render the WeeklyGrid only when the current view is 'WEEK' */}
+      <div className="h-full w-full">
+        <WeeklyGrid currentDate={currentDate} />
       </div>
     </DashboardLayout>
   )
