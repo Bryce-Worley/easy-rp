@@ -24,6 +24,7 @@ interface DashboardLayoutProps {
     onNextWeek: () => void;
     onGoToToday: () => void;
     onViewChange: (view: ViewType) => void;
+    onLogSession: () => void;
 }
 
 // Helper function to format the date range for the current week
@@ -60,7 +61,8 @@ export default function DashboardLayout({
     onPrevWeek,
     onNextWeek,
     onGoToToday,
-    onViewChange
+    onViewChange,
+    onLogSession
 }: DashboardLayoutProps) {
 
     const [isViewMenuopen, setIsViewMenuOpen] = useState(false);
@@ -154,7 +156,11 @@ export default function DashboardLayout({
                             )}
                         </div>
 
-                        <button className="Flex items-center gap-2 bg-[#ff5722] hover:bg-[#e64a19] text-white px-4 py-2 rounded text-sm font-semibold transition-colors">
+                        {/* Log Session Button */}
+                        <button 
+                            onClick={onLogSession}
+                            className="Flex items-center gap-2 bg-[#ff5722] hover:bg-[#e64a19] text-white px-4 py-2 rounded text-sm font-semibold transition-colors"
+                        >
                             <span className="text-lg leading-none">+</span> LOG SESSION
                         </button>
                     </div>       

@@ -2,9 +2,10 @@ import DayColumn from "./DayColumn"
 
 interface WeeklyGridProps {
     currentDate: Date;
+    onAddSession: (date: Date) => void; 
 }
 
-export default function WeeklyGrid({ currentDate }: WeeklyGridProps) {
+export default function WeeklyGrid({ currentDate, onAddSession }: WeeklyGridProps) {
     // Calculate the start of the week (Sunday)
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay())
@@ -18,11 +19,6 @@ export default function WeeklyGrid({ currentDate }: WeeklyGridProps) {
 
     const dayNames = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT']
 
-    // Placeholder function for adding a session
-    const handleOpenAddModal = (date: Date) => {
-        console.log(`Open Add Session Modal for ${date.toDateString()}`)
-    }
-
     return (
         // Render the weekly grid
         <div className="grid grid-cols-7 h-full w-full bg-{#1a1a1a] border border-zinc-800 rounded-sm">
@@ -32,7 +28,7 @@ export default function WeeklyGrid({ currentDate }: WeeklyGridProps) {
                     key={date.toISOString()}
                     date={date}
                     dayName={dayNames[index]}
-                    onAddSession={handleOpenAddModal}
+                    onAddSession={onAddSession} 
                 />
             ))}
         </div>

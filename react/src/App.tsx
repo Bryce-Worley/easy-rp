@@ -4,6 +4,8 @@ import { supabase } from './supabaseClient'
 import { Auth } from './components/Auth'
 import DashboardLayout from './components/DashboardLayout'
 import WeeklyGrid from './components/WeeklyGrid'
+import SessionModal from './components/SessionModal'
+import type { SessionData } from './components/SessionModal'
 
 type ViewType = 'WEEK' | 'MONTH' | 'YEAR'
 
@@ -13,6 +15,11 @@ export default function App() {
 
   // Track the current view type (WEEK, MONTH, YEAR)
   const [currentView, setCurrentView] = useState<ViewType>('WEEK')
+
+  // Modal state for adding/editing sessions
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [editingSession, setEditingSession] = useState<SessionData | null>(null)
 
   useEffect(() => {
     // Get the current session on load
@@ -29,6 +36,7 @@ export default function App() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // Handlers for navigation
   const handlePrevWeek = () => {
     const newDate = new Date(currentDate)
     newDate.setDate(newDate.getDate() - 7)
@@ -45,23 +53,54 @@ export default function App() {
     setCurrentDate(new Date())
   }
 
+  // Handlers for modal
+  const handleOpenAddModal = (date: Date) => {
+    setSelectedDate(date)
+    setEditingSession(null) // Clear any editing session
+    setIsModalOpen(true)
+  }
+
+  const handleOpenEditModal = (date: Date, sessionData: SessionData) => {
+    setSelectedDate(date)
+    setEditingSession(sessionData)
+    setIsModalOpen(true)
+  }
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false) 
+  }
+
   if (!session) {
     return <Auth />
   }
   
   return (
-    <DashboardLayout
-      currentDate={currentDate}
-      currentView={currentView}
-      onPrevWeek={handlePrevWeek}
-      onNextWeek={handleNextWeek}
-      onGoToToday={handleGoToToday}
-      onViewChange={setCurrentView}
-    >
-      {/* Render the WeeklyGrid only when the current view is 'WEEK' */}
-      <div className="h-full w-full">
-        <WeeklyGrid currentDate={currentDate} />
-      </div>
-    </DashboardLayout>
+    <>
+      <DashboardLayout
+        currentDate={currentDate}
+        currentView={currentView}
+        onPrevWeek={handlePrevWeek}
+        onNextWeek={handleNextWeek}
+        onGoToToday={handleGoToToday}
+        onViewChange={setCurrentView}
+        onLogSession={() => handleOpenAddModal(new Date())}
+      >
+        <div className="h-full w-full relative">
+          <WeeklyGrid 
+            currentDate={currentDate} 
+            onAddSession={handleOpenAddModal}
+          />
+        </div>
+      </DashboardLayout>
+
+      {/* Render modal if state is true */}
+      {isModalOpen && (
+        <SessionModal
+          date={selectedDate}
+          sessionData={editingSession}
+          onClose={handleCloseModal}
+        />
+      )}
+    </>
   )
 }
