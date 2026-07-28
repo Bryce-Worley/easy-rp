@@ -1,11 +1,13 @@
 import DayColumn from "./DayColumn"
+import type { SessionData } from "./SessionModal"
 
 interface WeeklyGridProps {
     currentDate: Date;
+    exercises: SessionData[]; 
     onAddSession: (date: Date) => void; 
 }
 
-export default function WeeklyGrid({ currentDate, onAddSession }: WeeklyGridProps) {
+export default function WeeklyGrid({ currentDate, exercises,onAddSession }: WeeklyGridProps) {
     // Calculate the start of the week (Sunday)
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay())
@@ -28,6 +30,7 @@ export default function WeeklyGrid({ currentDate, onAddSession }: WeeklyGridProp
                     key={date.toISOString()}
                     date={date}
                     dayName={dayNames[index]}
+                    exercises={exercises}
                     onAddSession={onAddSession} 
                 />
             ))}

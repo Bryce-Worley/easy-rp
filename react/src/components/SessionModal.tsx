@@ -1,8 +1,9 @@
 import { Menu, Search, XCircle } from "lucide-react";
+import { useState } from "react";
 
 export interface SessionData {
     id?: string;
-    exercise: string;
+    exercise_name: string;
     weight: string;
     sets: string;
     reps: string;
@@ -14,10 +15,19 @@ interface SessionModalProps {
     date: Date;
     sessionData: SessionData | null; // If null, it's an "Add" modal; if not null, it's an "Edit" modal
     onClose: () => void;
+    onSave: (data: Omit<SessionData, 'id'>) => void; // Callback for saving session data
 }
 
-export default function SessionModal({ date, sessionData, onClose }: SessionModalProps) {
+export default function SessionModal({ date, sessionData, onClose, onSave }: SessionModalProps) {
     const isEditMode = !!sessionData; // Determine if it's edit mode based on sessionData
+
+    //React state for form fields
+    const [exerciseName, setExerciseName] = useState(sessionData?.exercise_name || '');
+    const [weight, setWeight] = useState(sessionData?.weight || '');
+    const [sets, setSets] = useState(sessionData?.sets || '');
+    const [reps, setReps] = useState(sessionData?.reps || '');
+    const [rpe, setRpe] = useState(sessionData?.rpe || '');
+    const [journal, setJournal] = useState(sessionData?.journal || '');
 
     // Format date for display
     const formattedDate = date.toLocaleDateString('en-US', {
@@ -26,6 +36,19 @@ export default function SessionModal({ date, sessionData, onClose }: SessionModa
         day: 'numeric',
         year: 'numeric'
     });
+
+    // Handle save action
+    const handleSaveClick = () => {
+        onSave({
+            exercise_name: exerciseName,
+            weight,
+            sets,
+            reps,
+            rpe,
+            journal
+        });
+        onClose(); // Close the modal after saving
+    };
 
     return (
         // Overlay background
@@ -57,7 +80,8 @@ export default function SessionModal({ date, sessionData, onClose }: SessionModa
                     <input
                         type="text"
                         placeholder="Search or add exercise"
-                        defaultValue={sessionData?.exercise || ''}
+                        value={exerciseName}
+                        onChange={(e) => setExerciseName(e.target.value)}
                         className="flex-1 bg-transparent text-white placeholder-zinc-400 focus:outline-none"
                     />
                     <Search size={20} className="text-zinc-300 ml-3" />
@@ -65,10 +89,10 @@ export default function SessionModal({ date, sessionData, onClose }: SessionModa
 
                 {/* Exercise Details Section */}
                 <div className="flex flex-wrap gap-4 mb-6">
-                    <MetricInput label="Weight" defaultValue={sessionData?.weight} />
-                    <MetricInput label="Sets" defaultValue={sessionData?.sets} />
-                    <MetricInput label="Reps" defaultValue={sessionData?.reps} />
-                    <MetricInput label="RPE" defaultValue={sessionData?.rpe} />
+                    <MetricInput label="Weight" value={weight} onChange={setWeight} />
+                    <MetricInput label="Sets" value={sets} onChange={setSets} />
+                    <MetricInput label="Reps" value={reps} onChange={setReps} />
+                    <MetricInput label="RPE" value={rpe} onChange={setRpe} />
                 </div>
 
                 {/* Add Row Button */}
@@ -85,9 +109,10 @@ export default function SessionModal({ date, sessionData, onClose }: SessionModa
                         Training Journal
                     </div>
                     <textarea
+                        value={journal}
+                        onChange={(e) => setJournal(e.target.value)}
                         className="w-full h-32 bg-transparent border border-zinc-500 rounded-lg p-4 pt-5 text-white placeholder-zinc-400 focus:outline-none focus:border-zinc-300 resize-none"
                         placeholder="Write your training notes here..."
-                        defaultValue={sessionData?.journal || ''}
                     ></textarea>
                 </div>
 
@@ -99,7 +124,10 @@ export default function SessionModal({ date, sessionData, onClose }: SessionModa
                     >
                         Cancel
                     </button>
-                    <button className="text-[#ff5722] hover:text-[#e64a19] text-sm font-medium transition-colors">
+                    <button 
+                        onClick={handleSaveClick}
+                        className="text-[#ff5722] hover:text-[#e64a19] text-sm font-medium transition-colors"
+                    >
                         Save
                     </button>
                     {isEditMode && (
@@ -114,7 +142,7 @@ export default function SessionModal({ date, sessionData, onClose }: SessionModa
 }
 
 // Helper component for metric inputs (Weight, Sets, Reps, RPE)
-function MetricInput({ label, defaultValue }: { label: string; defaultValue?: string }) {
+function MetricInput({ label, value, onChange }: { label: string; value: string, onChange: (val:string) => void }) {
     return (
         <div className="relative pt-2 flex-1 min-w-[80px]">
             <div className="absolute top-0 left-4 bg-[#333333] px-1.5 py-0.5 rounded text-[10px] text-zinc-300 font-medium z-10">
@@ -123,10 +151,11 @@ function MetricInput({ label, defaultValue }: { label: string; defaultValue?: st
             <div className="flex items-center border border-zinc-500 rounded-lg px-3 py-2 bg-transparent">
                 <input
                     type="text"
-                    defaultValue={defaultValue || ''} 
+                    value={value}
+                    onChange={(e) => onChange(e.target.value)}
                     className="w-full bg-transparent text-white placeholder-zinc-400 focus:outline-none text-sm"
                 />
-                <button className="text-zinc-300 hover:text-white transition-colors ml-1">
+                <button onClick={() => onChange('')} className="text-zinc-300 hover:text-white transition-colors ml-1">
                     <XCircle size={16} />
                 </button>
             </div>

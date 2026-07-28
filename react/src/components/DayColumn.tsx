@@ -1,14 +1,29 @@
 import { Plus } from 'lucide-react'
+import type { SessionData } from './SessionModal'
 
 interface DayColumnProps {
     date: Date;
     dayName: string;
-
-    // Placeholder for Add/Edit Modal
+    exercises: SessionData[];
     onAddSession?: (date: Date) => void;
 }
 
-export default function DayColumn({ date, dayName, onAddSession }: DayColumnProps) {
+// Helperto format the date to YYYY-MM-DD for database storage
+const formatDateToYYYYMMDD = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+};
+
+export default function DayColumn({ date, dayName, exercises, onAddSession }: DayColumnProps) {
+    const formattedDate = formatDateToYYYYMMDD(date);
+
+    // Filter exercises for the current date
+    const dayExercises = exercises.filter(
+        (ex) => (ex as unknown as { date: string }).date === formattedDate
+    )
+    
     return (
         <div className="flex flex-col border-r border-zinc-800 last:border-r-0 min-h-[600px]">
             
@@ -34,7 +49,32 @@ export default function DayColumn({ date, dayName, onAddSession }: DayColumnProp
 
             {/* Session Cards Container */}
             <div className="flex-1 p-3 flex flex-col gap-2 mt-2 overflow-y-auto">
-                {/* Placeholder for session cards */}
+                {dayExercises.map((exercise) => (
+                    <div
+                        key={exercise.id || Math.random().toString()} // Fallback key if id is missing
+                        className="border border-zinc-700 rounded-sm p-3 bg-[#1e1e1e] group relative shadow-md"
+                    >
+                        { /* Category Tag */ }
+                        <div className="flex items-center gap-1.5 mb-2">
+                            <span className="text-[10px] font-bold text-red-500 tracking wider uppercase">Strength</span>
+                        </div>
+
+                        {/* Dynamic Exercise Details */}
+                        <div className="text-xs text-zinc-300 flex flex-col gap-0.5">
+                            <span className="font-bold text-white mb-0.5">
+                                {exercise.exercise_name || 'Exercise'}
+                            </span>
+                            {exercise.weight && <span>{exercise.weight} lbs</span>}
+                            {exercise.sets && <span>{exercise.sets} sets</span>}
+                            {exercise.reps && <span>{exercise.reps} reps</span>}
+                            {exercise.rpe && <span>RPE: {exercise.rpe}</span>}
+                        </div>
+
+                        <button className="absolute bottom-2 right-2 text-[10px] tracking-wider text-zinc-500 hover:text-white transition-colors uppercase">
+                            EDIT
+                        </button>
+                    </div>
+                ))}
             </div>
         </div>
     )
