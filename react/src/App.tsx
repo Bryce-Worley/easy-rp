@@ -102,6 +102,12 @@ export default function App() {
     setIsModalOpen(true)
   }
 
+  const handleOpenEditModal = (date: Date, sessionData: SessionData) => {
+    setSelectedDate(date)
+    setEditingSession(sessionData)
+    setIsModalOpen(true)
+  }
+
   const handleCloseModal = () => {
     setIsModalOpen(false) 
   }
@@ -138,6 +144,47 @@ export default function App() {
 
     }
   };
+
+  // Function to update an existing session in Supabase
+  const handleUpdateSession = async (id: string, formData: Omit<SessionData, 'id'>) => {
+    const { error } = await supabase
+      .from('exercises')
+      .update({
+        exercise_name: formData.exercise_name,
+        weight: formData.weight,
+        sets: formData.sets,
+        reps: formData.reps,
+        rpe: formData.rpe,
+        journal: formData.journal,
+      })
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error updating session:', error);
+      alert('Error updating session: ' + error.message);
+    } else {
+      console.log('Session updated successfully!');
+      setIsModalOpen(false); // Close the modal after updating
+      fetchExercsises(); // Refresh the exercises list to reflect the updated session
+    }
+  };
+
+  // Function to delete a session from Supabase
+  const handleDeleteSession = async (id: string) => {
+    const { error } = await supabase
+      .from('exercises')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting session:', error);
+      alert('Error deleting session: ' + error.message);
+    } else {
+      console.log('Session deleted successfully!');
+      setIsModalOpen(false); // Close the modal after deleting
+      fetchExercsises(); // Refresh the exercises list to reflect the deletion
+    }
+  };
     
 
   if (!session) {
@@ -160,6 +207,7 @@ export default function App() {
             currentDate={currentDate} 
             exercises={exercises}
             onAddSession={handleOpenAddModal}
+            onEditSession={handleOpenEditModal}
           />
         </div>
       </DashboardLayout>
@@ -171,6 +219,8 @@ export default function App() {
           sessionData={editingSession}
           onClose={handleCloseModal}
           onSave={handleSaveSession}
+          onUpdate={handleUpdateSession}
+          onDelete={handleDeleteSession}
         />
       )}
     </>

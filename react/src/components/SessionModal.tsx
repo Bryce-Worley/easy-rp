@@ -16,9 +16,19 @@ interface SessionModalProps {
     sessionData: SessionData | null; // If null, it's an "Add" modal; if not null, it's an "Edit" modal
     onClose: () => void;
     onSave: (data: Omit<SessionData, 'id'>) => void; // Callback for saving session data
+    onUpdate: (id: string, data: Omit<SessionData, 'id'>) => void; // Callback for updating session data
+    onDelete: (id: string) => void; // Callback for deleting session data
 }
 
-export default function SessionModal({ date, sessionData, onClose, onSave }: SessionModalProps) {
+export default function SessionModal({ 
+    date, 
+    sessionData, 
+    onClose, 
+    onSave,
+    onUpdate,
+    onDelete 
+}: SessionModalProps) {
+
     const isEditMode = !!sessionData; // Determine if it's edit mode based on sessionData
 
     //React state for form fields
@@ -39,15 +49,33 @@ export default function SessionModal({ date, sessionData, onClose, onSave }: Ses
 
     // Handle save action
     const handleSaveClick = () => {
-        onSave({
+        const payload = {
             exercise_name: exerciseName,
             weight,
             sets,
             reps,
             rpe,
             journal
-        });
+        };
+
+        // If in edit mode, call onUpdate; otherwise, call onSave
+        if (isEditMode && sessionData?.id) {
+            onUpdate(sessionData.id, payload);
+        } else {
+            onSave(payload);
+        }
         onClose(); // Close the modal after saving
+    };
+
+    // Handle delete action
+    const handleDeleteClick = () => {
+        if (isEditMode && sessionData?.id) {
+            // Confirmation before deletion
+            if (window.confirm("Are you sure you want to delete this exercise? This action cannot be undone.")) {
+                onDelete(sessionData.id);
+                onClose(); // Close the modal after deletion
+            }
+        }
     };
 
     return (
@@ -131,7 +159,10 @@ export default function SessionModal({ date, sessionData, onClose, onSave }: Ses
                         Save
                     </button>
                     {isEditMode && (
-                        <button className="text-[#ff5722] hover:text-red-500 text-sm font-medium transition-colors uppercase">
+                        <button 
+                            onClick={handleDeleteClick} 
+                            className="text-[#ff5722] hover:text-red-500 text-sm font-medium transition-colors uppercase"
+                        >
                             Delete
                         </button>
                     )}

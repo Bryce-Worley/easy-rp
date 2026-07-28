@@ -5,9 +5,10 @@ interface WeeklyGridProps {
     currentDate: Date;
     exercises: SessionData[]; 
     onAddSession: (date: Date) => void; 
+    onEditSession?: (date: Date, sessionData: SessionData) => void;
 }
 
-export default function WeeklyGrid({ currentDate, exercises,onAddSession }: WeeklyGridProps) {
+export default function WeeklyGrid({ currentDate, exercises, onAddSession, onEditSession }: WeeklyGridProps) {
     // Calculate the start of the week (Sunday)
     const startOfWeek = new Date(currentDate);
     startOfWeek.setDate(currentDate.getDate() - currentDate.getDay())
@@ -32,6 +33,7 @@ export default function WeeklyGrid({ currentDate, exercises,onAddSession }: Week
                     dayName={dayNames[index]}
                     exercises={exercises}
                     onAddSession={onAddSession} 
+                    onEditSession={onEditSession}
                 />
             ))}
         </div>

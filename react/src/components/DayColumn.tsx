@@ -6,6 +6,7 @@ interface DayColumnProps {
     dayName: string;
     exercises: SessionData[];
     onAddSession?: (date: Date) => void;
+    onEditSession?: (date: Date, sessionData: SessionData) => void;
 }
 
 // Helperto format the date to YYYY-MM-DD for database storage
@@ -16,7 +17,7 @@ const formatDateToYYYYMMDD = (d: Date) => {
     return `${year}-${month}-${day}`;
 };
 
-export default function DayColumn({ date, dayName, exercises, onAddSession }: DayColumnProps) {
+export default function DayColumn({ date, dayName, exercises, onAddSession, onEditSession }: DayColumnProps) {
     const formattedDate = formatDateToYYYYMMDD(date);
 
     // Filter exercises for the current date
@@ -70,7 +71,10 @@ export default function DayColumn({ date, dayName, exercises, onAddSession }: Da
                             {exercise.rpe && <span>RPE: {exercise.rpe}</span>}
                         </div>
 
-                        <button className="absolute bottom-2 right-2 text-[10px] tracking-wider text-zinc-500 hover:text-white transition-colors uppercase">
+                        <button 
+                            onClick={() => onEditSession?.(date, exercise)}
+                            className="absolute bottom-2 right-2 text-[10px] tracking-wider text-zinc-500 hover:text-white transition-colors uppercase"
+                        >
                             EDIT
                         </button>
                     </div>
