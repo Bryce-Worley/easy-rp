@@ -3,7 +3,7 @@ import { supabase } from '../supabaseClient'
 import ReactMarkdown from 'react-markdown'
 import { Download, X, HelpCircle, FileText } from 'lucide-react'
 
-import readmeContent from '../../README.md?raw'
+import readmeContent from '../../../README.md?raw'
 
 interface HelpModalProps {
     onClose: () => void;

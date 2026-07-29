@@ -1,5 +1,6 @@
-import { Menu, Search, XCircle } from "lucide-react";
-import { useState } from "react";
+import { Menu, Search, XCircle, Plus, Check, X } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "../supabaseClient";
 
 export interface SessionData {
     id?: string;
@@ -9,6 +10,12 @@ export interface SessionData {
     reps: string;
     rpe: string;
     journal: string;
+}
+
+interface ExerciseLibraryItem {
+    id: string;
+    name: string;
+    category?: string;
 }
 
 interface SessionModalProps {
@@ -31,6 +38,11 @@ export default function SessionModal({
 
     const isEditMode = !!sessionData; // Determine if it's edit mode based on sessionData
 
+    // State for exercise library
+    const [library, setLibrary] = useState<ExerciseLibraryItem[]>([]);
+    const [isCreatingNew, setIsCreatingNew] = useState(false);
+    const [newExerciseInput, setNewExerciseInput] = useState('');
+
     //React state for form fields
     const [exerciseName, setExerciseName] = useState(sessionData?.exercise_name || '');
     const [weight, setWeight] = useState(sessionData?.weight || '');
@@ -38,6 +50,54 @@ export default function SessionModal({
     const [reps, setReps] = useState(sessionData?.reps || '');
     const [rpe, setRpe] = useState(sessionData?.rpe || '');
     const [journal, setJournal] = useState(sessionData?.journal || '');
+
+    // Fetch exercise library from Supabase
+    useEffect(() => {
+        const fetchLibrary = async () => {
+            const { data, error } = await supabase
+                .from('exercise_library')
+                .select('*')
+                .order('name', { ascending: true });
+                
+            if (!error && data) {
+                setLibrary(data);
+                // If not editing and library exists, pre-fill the exercise name with the first item
+                if (!sessionData && data.length > 0 && !exerciseName) {
+                    setExerciseName(data[0].name);
+                }
+            }
+        };
+
+        fetchLibrary();
+    }, []);
+
+    // Save the new exercise to the library if it doesn't exist
+    const handleAddNewExercise = async () => {
+        if (!newExerciseInput.trim()) return;
+
+        const trimmedName = newExerciseInput.trim();
+
+        const {data: { session }} = await supabase.auth.getSession();
+        if (!session?.user) {
+            alert("User not authenticated");
+            return;
+        }
+        
+        const { data, error } = await supabase
+            .from ('exercise_library')
+            .insert([{ user_id: session.user.id, name: trimmedName }])
+            .select()
+
+        if (error) {
+            console.error("Error adding new exercise:", error);
+            alert("Failed to add new exercise. Please try again.");
+        } else if (data && data.length > 0) {
+            setLibrary((prev) => [...prev, data[0]].sort((a, b) => a.name.localeCompare(b.name)));
+            setExerciseName(trimmedName);
+            setNewExerciseInput('');
+            setIsCreatingNew(false);
+        }
+    };
 
     // Format date for display
     const formattedDate = date.toLocaleDateString('en-US', {
@@ -49,6 +109,11 @@ export default function SessionModal({
 
     // Handle save action
     const handleSaveClick = () => {
+        if(!exerciseName) {
+            alert("Please select or add an exercise.")
+            return;
+        }
+
         const payload = {
             exercise_name: exerciseName,
             weight,
@@ -103,16 +168,73 @@ export default function SessionModal({
                 </div>
 
                 {/* Search/Exercise Input Section */}
-                <div className="flex items-center bg-[#4A4A4C] border border-zinc-500 rounded-lg px-4 py-3 mb-6">
-                    <Menu size={20} className="text-zinc-300 mr-3" />
-                    <input
-                        type="text"
-                        placeholder="Search or add exercise"
-                        value={exerciseName}
-                        onChange={(e) => setExerciseName(e.target.value)}
-                        className="flex-1 bg-transparent text-white placeholder-zinc-400 focus:outline-none"
-                    />
-                    <Search size={20} className="text-zinc-300 ml-3" />
+                <div className="mb-6">
+                    {!isCreatingNew ? (
+                        <div className="flex items-center gap-2">
+                            {/* Dropdown Container */}
+                            <div className="flex-1 flex items-center bg-[#4A4A4C] border border-zinc-500 rounded-lg px-4 py-3">
+                                <Menu size={20} className="text-zinc-300 mr-3" />
+                                <select
+                                    value={exerciseName}
+                                    onChange={(e) => setExerciseName(e.target.value)}
+                                    className="flex-1 bg-transparent text-white focus:outline-none"
+                                >
+                                    {library.length === 0 ? (
+                                        <option value="" className="bg-[#333333]">No exercises in library...</option>
+                                    ) : (
+                                        library.map((item) => (
+                                            <option key={item.id} value={item.name} className="bg-[#333333]">
+                                                {item.name}
+                                            </option>
+                                        ))
+                                    )}
+                                </select>
+                            </div>
+
+                            {/* Add New Trigger */}
+                            <button
+                                type="button"
+                                onClick={() => setIsCreatingNew(true)}
+                                className="flex items-center justify-center gap-1.5 bg-[#4A4A4C] border border-zinc-500 text-white px-4 py-3 rounded-lg hover:bg-[#333333] transition-colors"
+                            >
+                                <Plus size={18} className="text-[#ff5722]" />
+                                <span className="text-sm font-medium">New</span>
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            {/* New Exercise Input */}
+                            <div className="flex-1 flex items-center bg-[#4A4A4C] border border-[#ff5722] rounded-lg px-4 py-3">
+                                <Plus size={20} className="text-[#ff5722] mr-3" />
+                                <input
+                                    type="text"
+                                    placeholder="Type new exercise name..."
+                                    value={newExerciseInput}
+                                    onChange={(e) => setNewExerciseInput(e.target.value)}
+                                    autoFocus
+                                    className="flex-1 bg-transparent text-white placeholder-zinc-400 focus:outline-none"
+                                />
+                            </div>
+                            
+                            {/* Save/Cancel New Exercise */}
+                            <button
+                                type="button"
+                                onClick={handleAddNewExercise}
+                                className="bg-[#ff5722] hover:bg-[#e64a19] text-white px-4 py-3 rounded-lg text-sm font-medium transition-colors flex items-center gap-1"
+                            >
+                                <Check size={16} />
+                                Save
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setIsCreatingNew(false)}
+                                className="bg-[#4A4A4C] border border-zinc-500 text-white px-4 py-3 rounded-lg text-sm hover:bg-[#333333] transition-colors flex items-center gap-1"
+                            >
+                                <X size={16} />
+                                Cancel
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 {/* Exercise Details Section */}
