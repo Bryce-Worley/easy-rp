@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
-import { Auth } from './components/Auth'
+import Auth from './components/Auth'
 import DashboardLayout from './components/DashboardLayout'
 import WeeklyGrid from './components/WeeklyGrid'
 import SessionModal from './components/SessionModal'
@@ -185,6 +185,18 @@ export default function App() {
       fetchExercsises(); // Refresh the exercises list to reflect the deletion
     }
   };
+
+  // Function to handle user logout
+  const handleLogout = async () => {
+    const { error } = await supabase.auth.signOut()
+    if (error) {
+      console.error('Error logging out:', error)
+      alert('Error logging out: ' + error.message)
+    } else {
+      console.log('Logged out successfully!')
+      setSession(null) // Clear the session state
+    }
+  };
     
 
   if (!session) {
@@ -201,6 +213,7 @@ export default function App() {
         onGoToToday={handleGoToToday}
         onViewChange={setCurrentView}
         onLogSession={() => handleOpenAddModal(new Date())}
+        onLogout={handleLogout}
       >
         <div className="h-full w-full relative">
           <WeeklyGrid 

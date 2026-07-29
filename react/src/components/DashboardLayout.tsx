@@ -10,7 +10,8 @@ import {
     HelpCircle,
     ChevronRight,
     ChevronLeft,
-    ChevronDown
+    ChevronDown,
+    LogOut
 } from 'lucide-react'
 
 // View types for calendar
@@ -25,6 +26,7 @@ interface DashboardLayoutProps {
     onGoToToday: () => void;
     onViewChange: (view: ViewType) => void;
     onLogSession: () => void;
+    onLogout: () => void;
 }
 
 // Helper function to format the date range for the current week
@@ -62,7 +64,8 @@ export default function DashboardLayout({
     onNextWeek,
     onGoToToday,
     onViewChange,
-    onLogSession
+    onLogSession,
+    onLogout
 }: DashboardLayoutProps) {
 
     const [isViewMenuopen, setIsViewMenuOpen] = useState(false);
@@ -89,9 +92,16 @@ export default function DashboardLayout({
                     <NavItem icon={<User size={24} />} label="Profile" />
                 </nav>
 
-                {/* Help Icon at the bottom */}
+                {/* Help/logout Icon at the bottom */}
                 <div className="mt-auto w-full">
                     <NavItem icon={<HelpCircle size={24} />} label="Help" />
+                    <button
+                        onClick={onLogout}
+                        className="w-full flex flex-col items-center gap-1.5 px-2 py-3 rounded text-zinc-500 hover:bg-zinc-800/50 transition-colors text-sm font-medium"
+                    >
+                        <LogOut size={24} />
+                        <span>Log Out</span>
+                    </button>
                 </div>
             </aside>
 
