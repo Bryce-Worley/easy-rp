@@ -6,6 +6,7 @@ import DashboardLayout from './components/DashboardLayout'
 import WeeklyGrid from './components/WeeklyGrid'
 import SessionModal from './components/SessionModal'
 import type { SessionData } from './components/SessionModal'
+import HelpModal from './components/HelpModal'
 
 type ViewType = 'WEEK' | 'MONTH' | 'YEAR'
 
@@ -31,6 +32,9 @@ export default function App() {
 
   // State for fetched exercises
   const [exercises, setExercises] = useState<SessionData[]>([])
+
+  // State for help modal
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false)
 
   useEffect(() => {
     // Get the current session on load
@@ -214,6 +218,7 @@ export default function App() {
         onViewChange={setCurrentView}
         onLogSession={() => handleOpenAddModal(new Date())}
         onLogout={handleLogout}
+        onOpenHelp={() => setIsHelpModalOpen(true)}
       >
         <div className="h-full w-full relative">
           <WeeklyGrid 
@@ -235,6 +240,11 @@ export default function App() {
           onUpdate={handleUpdateSession}
           onDelete={handleDeleteSession}
         />
+      )}
+
+      {/* Help and Export Modal */}
+      {isHelpModalOpen && (
+        <HelpModal onClose={() => setIsHelpModalOpen(false)} />
       )}
     </>
   )
