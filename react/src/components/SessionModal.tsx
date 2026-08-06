@@ -92,7 +92,8 @@ export default function SessionModal({
             console.error("Error adding new exercise:", error);
             alert("Failed to add new exercise. Please try again.");
         } else if (data && data.length > 0) {
-            setLibrary((prev) => [...prev, data[0]].sort((a, b) => a.name.localeCompare(b.name)));
+            const newExercise: ExerciseLibraryItem = { id: data[0].id, name: data[0].name };
+            setLibrary((prev) => [...prev, newExercise].sort((a, b) => a.name.localeCompare(b.name)));
             setExerciseName(trimmedName);
             setNewExerciseInput('');
             setIsCreatingNew(false);

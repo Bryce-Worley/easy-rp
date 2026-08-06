@@ -3,6 +3,7 @@ import type { Session } from '@supabase/supabase-js'
 import { supabase } from './supabaseClient'
 import Auth from './components/Auth'
 import DashboardLayout from './components/DashboardLayout'
+import JournalSearchModal from './components/JournalSearchModal'
 import WeeklyGrid from './components/WeeklyGrid'
 import SessionModal from './components/SessionModal'
 import type { SessionData } from './components/SessionModal'
@@ -116,6 +117,9 @@ export default function App() {
     setIsModalOpen(false) 
   }
 
+  // Handler for opening the search modal
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
+
   // Function to save to supabase
   const handleSaveSession = async (formData: Omit<SessionData, 'id'>) => {
     if (!session?.user) return;
@@ -219,6 +223,7 @@ export default function App() {
         onLogSession={() => handleOpenAddModal(new Date())}
         onLogout={handleLogout}
         onOpenHelp={() => setIsHelpModalOpen(true)}
+        onOpenSearch={() => setIsSearchOpen(true)}
       >
         <div className="h-full w-full relative">
           <WeeklyGrid 
@@ -245,6 +250,11 @@ export default function App() {
       {/* Help and Export Modal */}
       {isHelpModalOpen && (
         <HelpModal onClose={() => setIsHelpModalOpen(false)} />
+      )}
+
+      {/* Search Modal */}
+      {isSearchOpen && (
+        <JournalSearchModal onClose={() => setIsSearchOpen(false)} />
       )}
     </>
   )

@@ -11,7 +11,8 @@ import {
     ChevronRight,
     ChevronLeft,
     ChevronDown,
-    LogOut
+    LogOut,
+    Search
 } from 'lucide-react'
 
 // View types for calendar
@@ -28,6 +29,7 @@ interface DashboardLayoutProps {
     onLogSession: () => void;
     onLogout: () => void;
     onOpenHelp?: () => void;
+    onOpenSearch: () => void;
 }
 
 // Helper function to format the date range for the current week
@@ -67,7 +69,8 @@ export default function DashboardLayout({
     onViewChange,
     onLogSession,
     onOpenHelp,
-    onLogout
+    onLogout,
+    onOpenSearch
 }: DashboardLayoutProps) {
 
     const [isViewMenuopen, setIsViewMenuOpen] = useState(false);
@@ -87,6 +90,11 @@ export default function DashboardLayout({
                 {/* Navigation Icons */}
                 <nav className="flex flex-col gap-2 w-full">
                     <NavItem icon={<Calendar size={24} />} label="Planner" active />
+                    <NavItem
+                        icon={<Search size={24} />}
+                        label="Search"
+                        onClick={onOpenSearch}
+                    />
                     <NavItem icon={<LineChart size={24} />} label="Metrics" />
                     <NavItem icon={<Target size={24} />} label="Goals" />
                     <NavItem icon={<Activity size={24} />} label="Tests" />
@@ -195,9 +203,22 @@ export default function DashboardLayout({
 }
 
 // Helper function for navigation items
-function NavItem({ icon, label, active = false }: { icon: ReactNode; label: string; active?: boolean }) {
+function NavItem({ 
+    icon, 
+    label, 
+    active = false,
+    onClick
+ }: { 
+    icon: ReactNode; 
+    label: string; 
+    active?: boolean; 
+    onClick: () => void 
+}) {
     return (
-        <button className={`flex flex-col items-center gap-1 py3 w-full transition-colors ${active ? 'bg-[#ff5722] text-white' : 'text-zinc-500 hover:text-zinc300 hover:bg-zinc-800/50'}`}>
+        <button 
+            onClick={onClick}
+            className={`flex flex-col items-center gap-1 py3 w-full transition-colors ${active ? 'bg-[#ff5722] text-white' : 'text-zinc-500 hover:text-zinc300 hover:bg-zinc-800/50'}`}
+        >
             {icon}
             <span className="text-[10px] uppercase tracking-wider font-medium">{label}</span>
         </button>
