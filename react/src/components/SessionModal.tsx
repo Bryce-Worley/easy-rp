@@ -1,6 +1,8 @@
-import { Menu, Search, XCircle, Plus, Check, X } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Menu, XCircle, Plus, Check, X } from "lucide-react";
+import { useState, useEffect, type ReactNode } from "react";
 import { supabase } from "../supabaseClient";
+import { convertValue } from "../services/unitConvService";
+import UnitToggle from "./UnitToggle";
 
 export interface SessionData {
     id?: string;
@@ -43,13 +45,28 @@ export default function SessionModal({
     const [isCreatingNew, setIsCreatingNew] = useState(false);
     const [newExerciseInput, setNewExerciseInput] = useState('');
 
+    // Parse weight and unit from saved string
+    const getInitialWeightData = () => {
+        if (!sessionData?.weight) return { val: '', un: 'lbs' as const };
+        const wStr = sessionData.weight.toLowerCase();
+        if (wStr.includes('kg')) return { val: wStr.replace('kg', '').trim(), un: 'kg' as const };
+        if (wStr.includes('lbs')) return { val: wStr.replace('lbs', '').trim(), un: 'lbs' as const };
+        return { val: sessionData.weight, un: 'lbs' as const }; // Fallback for old data without units
+    };
+
+    const initialWeightData = getInitialWeightData();
+
     //React state for form fields
     const [exerciseName, setExerciseName] = useState(sessionData?.exercise_name || '');
-    const [weight, setWeight] = useState(sessionData?.weight || '');
+    const [weight, setWeight] = useState(initialWeightData.val);
+    const [unit, setUnit] = useState<'lbs' | 'kg'>(initialWeightData.un);
     const [sets, setSets] = useState(sessionData?.sets || '');
     const [reps, setReps] = useState(sessionData?.reps || '');
     const [rpe, setRpe] = useState(sessionData?.rpe || '');
     const [journal, setJournal] = useState(sessionData?.journal || '');
+
+    // State for unit conversion microservice
+    const [isConverting, setIsConverting] = useState(false);
 
     // Fetch exercise library from Supabase
     useEffect(() => {
@@ -100,6 +117,23 @@ export default function SessionModal({
         }
     };
 
+    //Toggle units and call the microservice to convert the weight value
+    const handleUnitToggle = async (newUnit: 'lbs' | 'kg') => {
+        if (newUnit === unit) return;
+
+        const weightNum = Number(weight);
+        if (!weight || isNaN(weightNum) || weightNum <= 0) {
+            setUnit(newUnit);
+            return;
+        }
+
+        setIsConverting(true);
+        const converted = await convertValue(weightNum, unit, newUnit);
+        setWeight(converted.toString());
+        setUnit(newUnit);
+        setIsConverting(false);
+    };
+
     // Format date for display
     const formattedDate = date.toLocaleDateString('en-US', {
         weekday: 'long',
@@ -115,9 +149,11 @@ export default function SessionModal({
             return;
         }
 
+        const formattedWeight = weight ? `${weight} ${unit.toUpperCase()}` : '';
+
         const payload = {
             exercise_name: exerciseName,
-            weight,
+            weight: formattedWeight,
             sets,
             reps,
             rpe,
@@ -130,7 +166,7 @@ export default function SessionModal({
         } else {
             onSave(payload);
         }
-        onClose(); // Close the modal after saving
+        onClose(); 
     };
 
     // Handle delete action
@@ -149,7 +185,7 @@ export default function SessionModal({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
 
             {/* Modal Container */}
-            <div className="w-full max-w-xl bg-[#5C5C5E] rounded-3xl p-8 shadow-2x relative">
+            <div className="w-full max-w-xl bg-[#5C5C5E] rounded-3xl p-8 shadow-2xl relative">
 
                 {/* Header Section */}
                 <div className="flex justify-between items-center mb-6">
@@ -161,7 +197,7 @@ export default function SessionModal({
                     </div>
                     {!isEditMode && (
                         <div className="flex items-center">
-                            <button className="bg-[#ff5722} text-white px-4 py-1.5 rounded-full text-sm dont-medium hover:bg-[#e64a19] transition-colors">
+                            <button className="bg-[#ff5722] text-white px-4 py-1.5 rounded-full text-sm font-medium hover:bg-[#e64a19] transition-colors">
                                 Repeat
                             </button>
                         </div>
@@ -240,7 +276,16 @@ export default function SessionModal({
 
                 {/* Exercise Details Section */}
                 <div className="flex flex-wrap gap-4 mb-6">
-                    <MetricInput label="Weight" value={weight} onChange={setWeight} />
+                    <MetricInput 
+                        label="Weight" 
+                        value={weight} 
+                        onChange={setWeight}
+                        disabled={isConverting}
+                        placeholder={isConverting ? '...' : ''}
+                        rightElement={
+                            <UnitToggle unit={unit} onUnitChange={handleUnitToggle} /> 
+                        }
+                    />
                     <MetricInput label="Sets" value={sets} onChange={setSets} />
                     <MetricInput label="Reps" value={reps} onChange={setReps} />
                     <MetricInput label="RPE" value={rpe} onChange={setRpe} />
@@ -256,7 +301,7 @@ export default function SessionModal({
                 {/* Journal Section */}
                 <div className="relative mb-8 pt-2">
                     {/* Custom floating label */}
-                    <div className="absolute top-0 left-4 bg-[#333333] px-2 py-0.5 rounded text-[10px] text-zinc-300 font-medium z-10">
+                    <div className="absolute top-0 left-4 bg-[#5C5C5E] px-2 py-0.5 rounded text-[10px] text-zinc-300 font-medium z-10">
                         Training Journal
                     </div>
                     <textarea
@@ -296,22 +341,58 @@ export default function SessionModal({
 }
 
 // Helper component for metric inputs (Weight, Sets, Reps, RPE)
-function MetricInput({ label, value, onChange }: { label: string; value: string, onChange: (val:string) => void }) {
+function MetricInput({ 
+    label, 
+    value, 
+    onChange, 
+    disabled = false, 
+    placeholder = "",
+    rightElement 
+}: { 
+    label: string; 
+    value: string; 
+    onChange: (val: string) => void;
+    disabled?: boolean;
+    placeholder?: string;
+    rightElement?: ReactNode;
+}) {
     return (
-        <div className="relative pt-2 flex-1 min-w-[80px]">
-            <div className="absolute top-0 left-4 bg-[#333333] px-1.5 py-0.5 rounded text-[10px] text-zinc-300 font-medium z-10">
+        <div className={`relative pt-2 flex-1 ${rightElement ? 'min-w-[180px]' : 'min-w-[80px]'}`}>
+            
+            {/* Floating Label */}
+            <div className="absolute top-0 left-4 bg-[#5C5C5E] px-1.5 py-0.5 rounded text-[10px] text-zinc-300 font-medium z-10 leading-none">
                 {label}
             </div>
-            <div className="flex items-center border border-zinc-500 rounded-lg px-3 py-2 bg-transparent">
+            
+            {/* Input Box Container */}
+            <div className={`flex items-center justify-between border border-zinc-500 rounded-lg pl-3 pr-2 py-1.5 bg-transparent ${disabled ? 'opacity-50' : ''}`}>
+                
                 <input
                     type="text"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-full bg-transparent text-white placeholder-zinc-400 focus:outline-none text-sm"
+                    disabled={disabled}
+                    placeholder={placeholder}
+                    className="flex-1 min-w-[60px] w-full bg-transparent text-white placeholder-zinc-400 focus:outline-none text-sm"
                 />
-                <button onClick={() => onChange('')} className="text-zinc-300 hover:text-white transition-colors ml-1">
-                    <XCircle size={16} />
-                </button>
+                
+                {/* Toggle & Close Button Wrapper */}
+                <div className="flex items-center gap-2 flex-shrink-0 ml-1">
+                    {rightElement && (
+                        <div className="flex-shrink-0 scale-90 origin-right">
+                            {rightElement}
+                        </div>
+                    )}
+                    <button 
+                        type="button" 
+                        onClick={() => onChange('')} 
+                        disabled={disabled}
+                        className="text-zinc-400 hover:text-white transition-colors disabled:opacity-50 flex-shrink-0"
+                    >
+                        <XCircle size={16} />
+                    </button>
+                </div>
+
             </div>
         </div>
     )

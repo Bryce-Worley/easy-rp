@@ -65,7 +65,7 @@ export default function DayColumn({ date, dayName, exercises, onAddSession, onEd
                             <span className="font-bold text-white mb-0.5">
                                 {exercise.exercise_name || 'Exercise'}
                             </span>
-                            {exercise.weight && <span>{exercise.weight} lbs</span>}
+                            {exercise.weight && <span>{exercise.weight}</span>}
                             {exercise.sets && <span>{exercise.sets} sets</span>}
                             {exercise.reps && <span>{exercise.reps} reps</span>}
                             {exercise.rpe && <span>RPE: {exercise.rpe}</span>}
